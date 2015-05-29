@@ -1,0 +1,28 @@
+<head>
+  <script src="jquery-2.1.4.min.js"></script>
+  <script src="lib/displaylifi.js"></script>
+  <style>
+    body {
+      background-color: black;
+    }
+  </style>
+</head>
+<body>
+<canvas>
+</canvas>
+
+<script>
+  (function() {
+    var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 5});
+    lifi.pushString("testtest\nyasukiikeuchi");
+    /*
+    // test
+    for (var i = 0; i < 100; i++) {
+      lifi.pushOneBit(1);
+      lifi.pushOneBit(0);
+    }
+    */
+    lifi.start($("canvas")[0]);
+  })();
+</script>
+</body>
