@@ -26,7 +26,7 @@ function checkCLI() {
 
 QUnit.test( "fillColor high", function(assert) {
   if (checkCLI()) return;
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.fillColor(1, gCanvas);
   color = getPixelOnTopLeft(gCanvas.getContext("2d"));
   assert.equal(color.red, 255);
@@ -36,7 +36,7 @@ QUnit.test( "fillColor high", function(assert) {
 
 QUnit.test( "fillColor low", function(assert) {
   if (checkCLI()) return;
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.fillColor(0, gCanvas);
   color = getPixelOnTopLeft($("canvas")[0].getContext("2d"));
   assert.equal(color.red, 0);
@@ -45,7 +45,7 @@ QUnit.test( "fillColor low", function(assert) {
 });
 
 QUnit.test( "pushOneBIt 0", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushOneBit(0);
   var queue = lifi.getQueue();
   assert.equal(2, queue.length);
@@ -56,7 +56,7 @@ QUnit.test( "pushOneBIt 0", function(assert) {
 });
 
 QUnit.test( "pushOneBit 1", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushOneBit(1);
   var queue = lifi.getQueue();
   assert.equal(2, queue.length);
@@ -67,7 +67,7 @@ QUnit.test( "pushOneBit 1", function(assert) {
 });
 
 QUnit.test( "pushOneBit 110", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushOneBit(1);
   lifi.pushOneBit(1);
   lifi.pushOneBit(0);
@@ -88,7 +88,7 @@ QUnit.test( "pushOneBit 110", function(assert) {
 });
 
 QUnit.test( "pushChar", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushChar("a"); // ascii:97(0b1100001)
   var queue = lifi.getQueue();
   assert.equal(2 * 8, queue.length);
@@ -142,7 +142,7 @@ QUnit.test( "pushChar", function(assert) {
 });
 
 QUnit.test( "pushString", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushString("ab"); // ascii:97(0b01100001) ascii:98(0b01100010)
   var queue = lifi.getQueue();
   assert.equal(2 * 8 * 2, queue.length);
@@ -246,7 +246,7 @@ QUnit.test( "pushString", function(assert) {
 });
 
 QUnit.test( "computeMSecFromStart 10", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushOneBit(1);
   lifi.pushOneBit(0);
   lifi.computeMSecFromStart();
@@ -272,11 +272,11 @@ QUnit.test( "computeMSecFromStart 10", function(assert) {
 
 QUnit.test( "start", function(assert) {
   if (checkCLI()) return;
-  var lifi = new DisplayLiFi();
-  lifi.pushString("ab"); // ascii:97(0b1100001) ascii:98(0b1100010)
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
+  lifi.pushString("ab"); // ascii:97(0b01100001) ascii:98(0b01100010)
   lifi.start($("canvas")[0]);
   var queue = lifi.getQueue();
-  assert.equal(2 + 2 * 8 * 2, queue.length);
+  assert.equal(2 + 2 * 8 * 2 + 2, queue.length);
 
   // leader code
   var i = 0;
@@ -334,18 +334,18 @@ QUnit.test( "start", function(assert) {
   assert.equal(0, queue[i + 1].signal);
   assert.equal(300, queue[i + 1].duration);
 
-  i += 2;
-  assert.equal(1, queue[i].signal);
-  assert.equal(50, queue[i].duration);
-  assert.equal(0, queue[i + 1].signal);
-  assert.equal(300, queue[i + 1].duration);
-
   // b
   i += 2;
   assert.equal(1, queue[i].signal);
   assert.equal(50, queue[i].duration);
   assert.equal(0, queue[i + 1].signal);
   assert.equal(100, queue[i + 1].duration);
+
+  i += 2;
+  assert.equal(1, queue[i].signal);
+  assert.equal(50, queue[i].duration);
+  assert.equal(0, queue[i + 1].signal);
+  assert.equal(300, queue[i + 1].duration);
 
   i += 2;
   assert.equal(1, queue[i].signal);
@@ -385,7 +385,7 @@ QUnit.test( "start", function(assert) {
 });
 
 QUnit.test("insertLeaderCodeAtFirst", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushOneBit(1);
   lifi.insertLeaderCodeAtFirst();
   var queue = lifi.getQueue();
@@ -400,13 +400,13 @@ QUnit.test("insertLeaderCodeAtFirst", function(assert) {
 });
 
 QUnit.test("existsLeaderCode false", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushOneBit(1);
   assert.equal(false, lifi.existsLeaderCode());
 });
 
 QUnit.test("existsLeaderCode true", function(assert) {
-  var lifi = new DisplayLiFi();
+  var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 1, leaderCodeCountAtEnd: 1});
   lifi.pushOneBit(1);
   lifi.insertLeaderCodeAtFirst();
   assert.equal(true, lifi.existsLeaderCode());

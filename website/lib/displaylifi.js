@@ -20,8 +20,8 @@
   function DisplayLiFi(options) {
 
     var queue_ = [];
-    var leaderCodeCountAtFirst_ = 1;
-    var leaderCodeCountAtEnd_ = 1;
+    var leaderCodeCountAtFirst_ = 5;
+    var leaderCodeCountAtEnd_ = 2;
     var queueComputed_ = false;
     var self = this;
 
