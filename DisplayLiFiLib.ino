@@ -1,10 +1,16 @@
 #include "DisplayLiFi.h"
-#include <Wire.h>
 
-DisplayLiFi lifi = DisplayLiFi(0);
+#define LED 4
+
+void leaderCodeListener(char* receivedString) {
+  Serial.println(receivedString);
+}
+
+DisplayLiFi lifi = DisplayLiFi(0, leaderCodeListener);
 
 void setup() {
-  Serial.begin(9600); 
+  Serial.begin(9600);
+  delay(100);
 }
 
 void loop() {

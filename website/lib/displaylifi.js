@@ -21,11 +21,13 @@
 
     var queue_ = [];
     var leaderCodeCountAtFirst_ = 1;
+    var leaderCodeCountAtEnd_ = 1;
     var queueComputed_ = false;
     var self = this;
 
     if (typeof options != "undefined") {
       leaderCodeCountAtFirst_ = options["leaderCodeCountAtFirst"] ? options["leaderCodeCountAtFirst"] : leaderCodeCountAtFirst_;
+      leaderCodeCountAtEnd_ = options["leaderCodeCountAtEnd"] ? options["leaderCodeCountAtEnd"] : leaderCodeCountAtEnd_;
     }
 
     var r = "equestAnimationFrame";
@@ -69,8 +71,10 @@
     };
 
     this.insertLeaderCodeAtEnd = function () {
-      queue_.push({signal: 1, duration: LEADER_CODE_HIGH_DURATION});
-      queue_.push({signal: 0, duration: LEADER_CODE_LOW_DURATION});
+      for (var i = 0; i < leaderCodeCountAtEnd_; i++) {
+        queue_.push({signal: 1, duration: LEADER_CODE_HIGH_DURATION});
+        queue_.push({signal: 0, duration: LEADER_CODE_LOW_DURATION});
+      }
       queueComputed_ = false;
     };
 
