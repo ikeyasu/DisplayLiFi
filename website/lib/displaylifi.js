@@ -14,8 +14,8 @@
   var DURATION_0 = 100; //msec
   var DURATION_1 = 300; //msec
   var HIGH_DURATION = 50; //msec
-  var LEADER_CODE_HIGH_DURATION = 600; //msec
-  var LEADER_CODE_LOW_DURATION = 600; //msec
+  var LEADER_CODE_HIGH_DURATION = 1000; //msec
+  var LEADER_CODE_LOW_DURATION = 1000; //msec
 
   function DisplayLiFi(options) {
 
@@ -47,6 +47,16 @@
       return queue_;
     };
 
+    this.getProgress = function () {
+      if (queue_.length === 0) return 0;
+      return currentIndexOfQueue_ / queue_.length;
+    };
+
+    this.isDone = function () {
+      if (queue_.length === 0) return false;
+      return currentIndexOfQueue_ === queue_.length;
+    };
+
     this.fillColor = function (bit, canvas) {
       var context = canvas.getContext("2d");
       context.fillStyle = bit ? SENDER_COLOR_1 : SENDER_COLOR_0;
@@ -58,7 +68,7 @@
         throw "`sendOneBit()` accepts one bit number only.";
       }
       queue_.push({signal: 1, duration: HIGH_DURATION});
-      queue_.push({signal: 0, duration: bit == 0 ? DURATION_0 : DURATION_1});
+      queue_.push({signal: 0, duration: bit == 0 ? DURATION_0 - HIGH_DURATION: DURATION_1 - HIGH_DURATION});
       queueComputed_ = false;
     };
 

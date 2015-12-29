@@ -27,25 +27,13 @@ void DisplayLiFi::clearReceivedString() {
   }
 }
 
-DisplayLiFi::DisplayLiFi(int analogPort) :
-  bufferIndex_(0),
-  buffer_(0),
-  previousTime_(0),
-  previousSignal_(0),
-  analogPort_(0),
-  signalThreshold_(9) {
+DisplayLiFi::DisplayLiFi(int analogPort) {
   init(analogPort);
   // DO NOT use Serial debug in constructor
   // because Serial may not be initialized.
 }
 
-DisplayLiFi::DisplayLiFi(int analogPort, LeaderCodeListener leaderCodeListener) :
-  bufferIndex_(0),
-  buffer_(0),
-  previousTime_(0),
-  previousSignal_(0),
-  analogPort_(0),
-  signalThreshold_(9) {
+DisplayLiFi::DisplayLiFi(int analogPort, LeaderCodeListener leaderCodeListener) {
   init(analogPort, leaderCodeListener);
   // DO NOT use Serial debug in constructor
   // because Serial may not be initialized.
@@ -58,19 +46,38 @@ void DisplayLiFi::init(int analogPort) {
 void DisplayLiFi::init(int analogPort, LeaderCodeListener leaderCodeListener) {
   analogPort_ = analogPort;
   leaderCodeListener_ = leaderCodeListener;
+  signalThresholdHigh_ = 700;
+  signalThresholdLow_ = 100;
+  bufferIndex_ = 0;
+  buffer_ = 0;
+  previousTime_ = 0;
+  previousSignal_ = 0;
+  isCalibration_ = false;
+  calibrationStartTime_ = 0;
+  calibrationMax_ = 0;
+  calibrationMin_ = 1024;
+  calibrationDurationMSec_ = 0;
   clearReceivedString();
 }
 
-void DisplayLiFi::setSignalThreshold(int threshold) {
-  signalThreshold_ = threshold;
+void DisplayLiFi::setSignalThresholdHigh(int threshold) {
+  signalThresholdHigh_ = threshold;
 }
 
-int DisplayLiFi::getSignalThreshold() {
-  return signalThreshold_;
+void DisplayLiFi::setSignalThresholdLow(int threshold) {
+  signalThresholdLow_ = threshold;
+}
+
+int DisplayLiFi::getSignalThresholdHigh() {
+  return signalThresholdHigh_;
+}
+
+int DisplayLiFi::getSignalThresholdLow() {
+  return signalThresholdLow_;
 }
 
 inline boolean isLeaderCode(unsigned long diff) {
-  return diff > 400;
+  return diff > 800;
 }
 
 inline int detectLowHigh(unsigned long diff) {
@@ -79,12 +86,10 @@ inline int detectLowHigh(unsigned long diff) {
 
 #ifdef SERIAL_DEBUG_DISPLAY_LIFI
 void debugPrintLowHigh(int diff) {
-  if (diff > 400) {
+  if (isLeaderCode(diff)) {
     DPLN_V("LEADER");
-  } else if (diff > 200) {
-    DP("1");
   } else {
-    DP("0");
+    DP(detectLowHigh(diff));
   }
 }
 #else
@@ -109,9 +114,42 @@ char *DisplayLiFi::getReceivedString() {
   return receivedString_;
 }
 
+void DisplayLiFi::startCalibration(int milliseconds) {
+  isCalibration_ = true;
+  calibrationStartTime_ = millis();
+  calibrationDurationMSec_ = milliseconds;
+  DPLN("CALIBRATION Start");
+}
+
 void DisplayLiFi::loop() {
-  int val = analogRead(0);
-  if (val > signalThreshold_ && previousSignal_ <= signalThreshold_) {
+  int val = analogRead(analogPort_);
+  if (isCalibration_) {
+    calibrationMax_ = max(calibrationMax_, val);
+    calibrationMin_ = min(calibrationMin_, val);
+    if (millis() - calibrationStartTime_ >= calibrationDurationMSec_) {
+      isCalibration_ = false;
+      int thresholdHigh = calibrationMax_ * 0.8;
+      int thresholdLow = (calibrationMin_ == 0) ? thresholdHigh / 3 : calibrationMin_ * 1.2;
+      DPLN("CALIBRATION DONE");
+      DP("Max="); DP(calibrationMax_);
+      DP(" Min="); DPLN(calibrationMin_);
+      DP("ThresholdHigh="); DP(thresholdHigh);
+      DP(" ThresholdLow="); DPLN(thresholdLow);
+      if (thresholdLow >= thresholdHigh) {
+        DPLN("CALIBRATION ERROR");
+        // calibration is canceled
+        return;
+      }
+      setSignalThresholdHigh(thresholdHigh);
+      setSignalThresholdLow(thresholdLow);
+    }
+    return;
+  }
+
+  int signal = detectSignal(val);
+  if (signal < 0) return;
+
+  if (signal == 1 && previousSignal_ == 0) {
     unsigned long now = millis();
     unsigned long diff = now - previousTime_;
     debugPrintLowHigh(diff);
@@ -128,12 +166,21 @@ void DisplayLiFi::loop() {
     }
     previousTime_ = now;
   }
-  previousSignal_ = val;
+  previousSignal_ = signal;
+}
+
+int DisplayLiFi::detectSignal(int val) const {
+  if (val > signalThresholdHigh_) {
+    return 1;
+  } else if (val < signalThresholdLow_) {
+    return 0;
+  }
+  return -1;
 }
 
 void DisplayLiFi::callLeaderCodeListener() {
   if (leaderCodeListener_ == NULL) {
     return;
   }
-  (leaderCodeListener_)(getReceivedString());
+  (leaderCodeListener_)(receivedString_);
 }

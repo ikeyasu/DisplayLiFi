@@ -1,28 +1,50 @@
 <head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="jquery-2.1.4.min.js"></script>
   <script src="lib/displaylifi.js"></script>
   <style>
     body {
-      background-color: black;
+      background-color: white;
+      margin: 0; padding: 0;
     }
   </style>
 </head>
 <body>
-<canvas>
+<div id="screen-input-wifi-info" style="width: 100%; height: 100%;">
+  ssid: <input type="text" id="wifi-ssid" value="example"/><br />
+  pass: <input type="text" id="wifi-pass" value="sample"/><br />
+  <input type="button" id="wifi-next" value="Next" />
+</div>
+<div id="screen-displaylifi" style="display: none; width: 100%; height: 100%;">
+  Please put your device inside of <span style="color: red; font-weight: bold;">RED Borders</span>.
+  The current progress is <span id="displaylifi-progress">0</span>%.
+<canvas style="border: red 2px solid; width: 100%; height: 90%; box-sizing: border-box; ">
 </canvas>
-
+</div>
+<div id="screen-thankyou" style="display: none;">
+  Thank you!
+</div>
 <script>
   (function() {
-    var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 5});
-    lifi.pushString("testtest\nyasukiikeuchi");
-    /*
-    // test
-    for (var i = 0; i < 100; i++) {
-      lifi.pushOneBit(1);
-      lifi.pushOneBit(0);
+    function startLiFi(ssid, pass) {
+      var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 30});
+      lifi.pushString('[1,"' + ssid + '","' + pass + '"]');
+      lifi.start($('canvas')[0]);
+      setTimeout(function() {
+        $('#displaylifi-progress').text((lifi.getProgress() * 100).toFixed(1));
+        if (lifi.isDone()) {
+          $('#screen-thankyou').show();
+          $('#screen-displaylifi').hide();
+        } else {
+          setTimeout(arguments.callee, 1000);
+        }
+      }, 1000);
     }
-    */
-    lifi.start($("canvas")[0]);
+    $('#wifi-next').click(function() {
+      $('#screen-displaylifi').show();
+      $('#screen-input-wifi-info').hide();
+      startLiFi($('#wifi-ssid').val(), $('#wifi-pass').val());
+    });
   })();
 </script>
 </body>

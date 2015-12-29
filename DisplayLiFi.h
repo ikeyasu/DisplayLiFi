@@ -1,8 +1,10 @@
 #ifndef DISPLAYLIFILIB_DISPLAYLIFI_H
 #define DISPLAYLIFILIB_DISPLAYLIFI_H
 
-//#define SERIAL_DEBUG_DISPLAY_LIFI_VERBOSE
-//#define SERIAL_DEBUG_DISPLAY_LIFI
+#include <Arduino.h>
+
+#define SERIAL_DEBUG_DISPLAY_LIFI_VERBOSE
+#define SERIAL_DEBUG_DISPLAY_LIFI
 
 #if defined(UNITTEST_BUILD) && defined(SERIAL_DEBUG_DISPLAY_LIFI)
 #undef SERIAL_DEBUG_DISPLAY_LIFI
@@ -21,25 +23,37 @@ class DisplayLiFi {
     char receivedString_[64]; // TODO: reduce memory usage
     int receivedIndex_;
     int buffer_;
-    int signalThreshold_;
+    int signalThresholdHigh_;
+    int signalThresholdLow_;
     LeaderCodeListener leaderCodeListener_;
     void clearReceivedString();
     void init(int analogPort);
     void init(int analogPort, LeaderCodeListener leaderCodeListener1);
     void callLeaderCodeListener();
 
+    boolean isCalibration_;
+    unsigned long calibrationStartTime_;
+    int calibrationMax_;
+    int calibrationMin_;
+    int calibrationDurationMSec_;
+
   public:
     DisplayLiFi(int analogPort);
     DisplayLiFi(int analogPort, LeaderCodeListener leaderCodeListener);
-    void setSignalThreshold(int threshold);
-    int getSignalThreshold();
+    void setSignalThresholdHigh(int threshold);
+    void setSignalThresholdLow(int threshold);
+    int getSignalThresholdHigh();
+    int getSignalThresholdLow();
     void pushSignal(int signal);
     char* getReceivedString();
+    void startCalibration(int milliseconds);
     void loop();
 
     int getBuffer() {
       return buffer_;
     };
+
+  int detectSignal(int val) const;
 };
 
 #endif //DISPLAYLIFILIB_DISPLAYLIFI_H
