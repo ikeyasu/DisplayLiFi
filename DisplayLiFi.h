@@ -14,6 +14,13 @@
 #endif
 
 class DisplayLiFi {
+  public:
+    enum ERROR {
+        NONE,
+        CALIBRATION,
+        INVALID_SIGNAL
+    };
+    static const int LEADER_CODE_SIGNAL_DURATION = 800;
   private:
     typedef void (*LeaderCodeListener)(char* receivedString);
     int analogPort_;
@@ -33,9 +40,16 @@ class DisplayLiFi {
 
     boolean isCalibration_;
     unsigned long calibrationStartTime_;
+    unsigned long calibrationUpdatedTime_;
     int calibrationMax_;
     int calibrationMin_;
+    int calibrationMaxRecently_;
+    int calibrationMinRecently_;
     int calibrationDurationMSec_;
+    enum ERROR error_;
+    void setError(enum ERROR err) {
+      error_ = err;
+    }
 
   public:
     DisplayLiFi(int analogPort);
@@ -47,13 +61,16 @@ class DisplayLiFi {
     void pushSignal(int signal);
     char* getReceivedString();
     void startCalibration(int milliseconds);
-    void loop();
+    boolean loop();
 
     int getBuffer() {
       return buffer_;
     };
 
-  int detectSignal(int val) const;
+    enum ERROR getError() {
+      return error_;
+    }
+    int detectSignal(int val) const;
 };
 
 #endif //DISPLAYLIFILIB_DISPLAYLIFI_H

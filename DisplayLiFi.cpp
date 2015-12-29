@@ -54,9 +54,13 @@ void DisplayLiFi::init(int analogPort, LeaderCodeListener leaderCodeListener) {
   previousSignal_ = 0;
   isCalibration_ = false;
   calibrationStartTime_ = 0;
+  calibrationUpdatedTime_ = 0;
   calibrationMax_ = 0;
   calibrationMin_ = 1024;
+  calibrationMaxRecently_ = 0;
+  calibrationMinRecently_ = 1024;
   calibrationDurationMSec_ = 0;
+  error_ = ERROR::NONE;
   clearReceivedString();
 }
 
@@ -77,7 +81,7 @@ int DisplayLiFi::getSignalThresholdLow() {
 }
 
 inline boolean isLeaderCode(unsigned long diff) {
-  return diff > 800;
+  return diff > DisplayLiFi::LEADER_CODE_SIGNAL_DURATION;
 }
 
 inline int detectLowHigh(unsigned long diff) {
@@ -117,15 +121,23 @@ char *DisplayLiFi::getReceivedString() {
 void DisplayLiFi::startCalibration(int milliseconds) {
   isCalibration_ = true;
   calibrationStartTime_ = millis();
+  calibrationUpdatedTime_ = millis();
   calibrationDurationMSec_ = milliseconds;
   DPLN("CALIBRATION Start");
 }
 
-void DisplayLiFi::loop() {
+boolean DisplayLiFi::loop() {
   int val = analogRead(analogPort_);
   if (isCalibration_) {
-    calibrationMax_ = max(calibrationMax_, val);
-    calibrationMin_ = min(calibrationMin_, val);
+    calibrationMaxRecently_ = max(calibrationMaxRecently_, val);
+    calibrationMinRecently_ = min(calibrationMinRecently_, val);
+    if (millis() - calibrationUpdatedTime_ > LEADER_CODE_SIGNAL_DURATION * 2) {
+      calibrationMax_ = calibrationMaxRecently_;
+      calibrationMin_ = calibrationMinRecently_;
+      DPLN("Calibration Min/Max updated");
+      calibrationUpdatedTime_ = millis();
+      calibrationMaxRecently_ = calibrationMinRecently_ = 0;
+    }
     if (millis() - calibrationStartTime_ >= calibrationDurationMSec_) {
       isCalibration_ = false;
       int thresholdHigh = calibrationMax_ * 0.8;
@@ -136,18 +148,25 @@ void DisplayLiFi::loop() {
       DP("ThresholdHigh="); DP(thresholdHigh);
       DP(" ThresholdLow="); DPLN(thresholdLow);
       if (thresholdLow >= thresholdHigh) {
-        DPLN("CALIBRATION ERROR");
-        // calibration is canceled
-        return;
+        DPLN("CALIBRATION ERROR: thresholdLow is larger than High");
+        setError(ERROR::CALIBRATION);
+        return false;
+      }
+      if (thresholdHigh / 2 < thresholdLow) {
+        DPLN("CALIBRATION ERROR : thresholdHigh and low is too close");
+        setError(ERROR::CALIBRATION);
+        return false;
       }
       setSignalThresholdHigh(thresholdHigh);
       setSignalThresholdLow(thresholdLow);
     }
-    return;
+    return true;
   }
 
   int signal = detectSignal(val);
-  if (signal < 0) return;
+  if (signal < 0) {
+    return true;
+  }
 
   if (signal == 1 && previousSignal_ == 0) {
     unsigned long now = millis();
@@ -167,6 +186,7 @@ void DisplayLiFi::loop() {
     previousTime_ = now;
   }
   previousSignal_ = signal;
+  return true;
 }
 
 int DisplayLiFi::detectSignal(int val) const {

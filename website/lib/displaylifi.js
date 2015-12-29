@@ -80,7 +80,7 @@
       queueComputed_ = false;
     };
 
-    this.insertLeaderCodeAtEnd = function () {
+    this.pushLeaderCode = function () {
       for (var i = 0; i < leaderCodeCountAtEnd_; i++) {
         queue_.push({signal: 1, duration: LEADER_CODE_HIGH_DURATION});
         queue_.push({signal: 0, duration: LEADER_CODE_LOW_DURATION});
@@ -137,7 +137,7 @@
     this.start = function (canvas) {
       if (!this.existsLeaderCode()) {
         this.insertLeaderCodeAtFirst();
-        this.insertLeaderCodeAtEnd();
+        this.pushLeaderCode();
       }
       if (!queueComputed_) {
         this.computeMSecFromStart();

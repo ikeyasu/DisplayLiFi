@@ -27,7 +27,15 @@
 <script>
   (function() {
     function startLiFi(ssid, pass) {
-      var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 30});
+      var lifi = new DisplayLiFi({leaderCodeCountAtFirst: 20});
+
+      lifi.pushString('a');
+      lifi.pushLeaderCode();
+      lifi.pushString('a');
+      lifi.pushLeaderCode();
+      lifi.pushString('a');
+      lifi.pushLeaderCode();
+
       lifi.pushString('[1,"' + ssid + '","' + pass + '"]');
       lifi.start($('canvas')[0]);
       setTimeout(function() {
